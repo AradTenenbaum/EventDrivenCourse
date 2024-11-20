@@ -1,0 +1,21 @@
+version: "3"
+services:
+  rabbitmq:
+    image: "rabbitmq" # Using the base RabbitMQ image without the management UI
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # AMQP port for RabbitMQ
+    environment:
+      RABBITMQ_DEFAULT_USER: user # Default username
+      RABBITMQ_DEFAULT_PASS: password # Default password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq # Persistent data
+    networks:
+      - rabbitmq_network
+
+networks:
+  rabbitmq_network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:

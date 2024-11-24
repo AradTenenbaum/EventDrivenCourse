@@ -4,6 +4,7 @@ import json
 import pika
 import sys
 import os
+import time
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -19,19 +20,26 @@ def process_order(ch, method, properties, body):
         ch.basic_ack(delivery_tag=method.delivery_tag)
 
 def consume_messages():
-    connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host=os.getenv("RABBIT_HOST"),
-        credentials=pika.PlainCredentials('user', 'password')
-    ))
-    channel = connection.channel()
+    while(True):
+        try:
+            connection = pika.BlockingConnection(pika.ConnectionParameters(
+                host=os.getenv("RABBIT_HOST"),
+                credentials=pika.PlainCredentials('user', 'password')
+            ))
+            channel = connection.channel()
 
-    exchange_name = 'orders_exchange'
-    queue_name = 'new_orders_queue'
+            exchange_name = 'orders_exchange'
+            queue_name = 'new_orders_queue'
 
-    channel.queue_declare(queue=queue_name, durable=True)
+            channel.queue_declare(queue=queue_name, durable=True)
 
-    headers_filter = {"x-match": "all", "status": "new"}
-    channel.queue_bind(exchange=exchange_name, queue=queue_name, arguments=headers_filter)
+            headers_filter = {"x-match": "all", "status": "new"}
+            channel.queue_bind(exchange=exchange_name, queue=queue_name, arguments=headers_filter)
+            break
+        except:
+            logging.info('Retrying to connect Rabbit server')
+            time.sleep(5)
+
 
     def graceful_shutdown():
         logging.info("Shutting down consumer...")

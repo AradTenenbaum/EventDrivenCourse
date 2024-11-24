@@ -1,17 +1,46 @@
 version: "3"
 services:
   rabbitmq:
-    image: "rabbitmq" # Using the base RabbitMQ image without the management UI
+    image: "rabbitmq"
     container_name: rabbitmq
     ports:
-      - "5672:5672" # AMQP port for RabbitMQ
+      - "5672:5672"
     environment:
-      RABBITMQ_DEFAULT_USER: user # Default username
-      RABBITMQ_DEFAULT_PASS: password # Default password
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
     volumes:
-      - rabbitmq_data:/var/lib/rabbitmq # Persistent data
+      - rabbitmq_data:/var/lib/rabbitmq
     networks:
       - rabbitmq_network
+
+  producer:
+    image: cart_service:latest
+    build:
+      context: ./producer
+    container_name: producer
+    ports:
+      - "5000:5000"
+    environment:
+      RABBIT_HOST: rabbitmq
+    networks:
+      - rabbitmq_network
+    depends_on:
+      - rabbitmq
+
+  consumer:
+    image: order_service:latest
+    build:
+      context: ./consumer
+    container_name: consumer
+    ports:
+      - "5001:5001"
+    environment:
+      RABBIT_HOST: rabbitmq
+    networks:
+      - rabbitmq_network
+    depends_on:
+      - rabbitmq
+      - producer
 
 networks:
   rabbitmq_network:

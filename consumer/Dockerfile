@@ -7,4 +7,4 @@ COPY *.py .
 
 RUN pip install -r requirements.txt
 
-CMD ["python", "cart_service.py"]
+CMD ["python", "order_service.py"]

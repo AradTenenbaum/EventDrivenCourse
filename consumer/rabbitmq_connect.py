@@ -3,7 +3,7 @@ from store import get_order, add_order
 import json
 import pika
 import sys
-
+import os
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
@@ -20,7 +20,7 @@ def process_order(ch, method, properties, body):
 
 def consume_messages():
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host='localhost',
+        host=os.getenv("RABBIT_HOST"),
         credentials=pika.PlainCredentials('user', 'password')
     ))
     channel = connection.channel()

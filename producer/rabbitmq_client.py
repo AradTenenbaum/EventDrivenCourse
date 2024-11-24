@@ -1,10 +1,11 @@
 import pika
 import json
+import os
 
 def send_order(order):
     credentials = pika.PlainCredentials('user', 'password')
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host='localhost',
+        host=os.getenv("RABBIT_HOST"),
         credentials=credentials
     ))
     channel = connection.channel()
@@ -24,7 +25,7 @@ def send_order(order):
 def init_rabbit():
     credentials = pika.PlainCredentials('user', 'password')
     connection = pika.BlockingConnection(pika.ConnectionParameters(
-        host='localhost',
+        host=os.getenv("RABBIT_HOST"),
         credentials=credentials
     ))
     channel = connection.channel()

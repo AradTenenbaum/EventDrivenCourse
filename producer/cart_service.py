@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 from generate_order import create_random_order
 from rabbitmq_client import send_order, init_rabbit
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
 app = Flask(__name__)
@@ -23,4 +24,4 @@ def create_order():
 
 if __name__ == '__main__':
     init_rabbit()
-    app.run(debug=True)
+    app.run(debug=True, host=os.getenv('HOST'))

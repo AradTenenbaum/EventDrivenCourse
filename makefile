@@ -21,3 +21,7 @@ stop-app:
 
 logs:
 	docker-compose logs
+
+
+remove-none-images:
+	docker images --filter "dangling=true" -q | ForEach-Object { docker rmi $_ }

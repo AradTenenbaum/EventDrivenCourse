@@ -7,4 +7,6 @@ COPY *.py .
 
 RUN pip install -r requirements.txt
 
+EXPOSE 5000
+
 CMD ["python", "cart_service.py"]

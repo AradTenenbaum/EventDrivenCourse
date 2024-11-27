@@ -13,7 +13,7 @@ def create_order():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
-    order = create_random_order(data['orderId'], data['itemNum'])
+    order = create_random_order(data['orderId'], data['itemsNum'])
 
     send_order(order)
     

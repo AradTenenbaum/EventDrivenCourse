@@ -9,7 +9,7 @@ build-consumer:
 
 run-build-app:
 	@echo Running Application
-	docker-compose up --build
+	docker-compose up --build -d
 
 run-app:
 	@echo Running Application

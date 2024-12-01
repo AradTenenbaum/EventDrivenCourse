@@ -3,7 +3,6 @@
 ## Personal Information
 
 **Name:** Arad Tenenbaum
-**ID Number:** 212293799
 
 ---
 

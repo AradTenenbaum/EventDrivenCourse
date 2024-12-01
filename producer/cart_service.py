@@ -12,6 +12,10 @@ def create_order():
     data = request.json
     if not data:
         return jsonify({"error": "No data provided"}), 400
+    if not 'orderId' in data:
+        return jsonify({"error": "No order id provided"}), 400
+    if not 'itemsNum' in data:
+        return jsonify({"error": "Number of items is not provided"}), 400
 
     order = create_random_order(data['orderId'], data['itemsNum'])
 

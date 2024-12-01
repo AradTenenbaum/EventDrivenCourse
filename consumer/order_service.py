@@ -13,10 +13,15 @@ app = Flask(__name__)
 def order_details():
     data = request.json
     if not data:
-        return jsonify({"error": "No data provided"}), 400
+        return jsonify({"error": "No order id provided"}), 400
+    
+    order = get_order(data['orderId'])
+
+    if order is None:
+        return jsonify({"error": "Order not found"}), 404
     
     response = {
-        "order": get_order(data['orderId'])
+        "order": order
     }
     return jsonify(response), 200
 

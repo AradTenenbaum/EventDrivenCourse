@@ -17,7 +17,7 @@
 ### Consumer Application:
 
 - **URL:** `http://localhost:5001/order-details`
-- **Type of Request:** GET  
+- **Type of Request:** POST  
   This endpoint retrieves details of processed orders from the queue.
 
 ---

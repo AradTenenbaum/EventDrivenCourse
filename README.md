@@ -2,7 +2,7 @@
 
 ## Personal Information
 
-**Name:** Arad Tenenbaum
+**Name:** Arad Tenenbaum \
 
 ---
 
@@ -13,12 +13,27 @@
 - **URL:** `http://localhost:5000/create-order`
 - **Type of Request:** POST  
   This endpoint is used to create new orders and send messages to the exchange.
+- **Example request body:**
+
+```json
+{
+  "orderId": "ord-1",
+  "itemsNum": 2
+}
+```
 
 ### Consumer Application:
 
 - **URL:** `http://localhost:5001/order-details`
 - **Type of Request:** POST  
   This endpoint retrieves details of processed orders from the queue.
+- **Example request body:**
+
+```json
+{
+  "orderId": "ord-1"
+}
+```
 
 ---
 
@@ -32,7 +47,7 @@
 
 ## Binding Key on the Consumer
 
-- **Binding Key:** Not using any
+- **Binding Key:** Not using any, When defining the queue the consumer is defined to receive only 'new' status as header filter
 
 ---
 

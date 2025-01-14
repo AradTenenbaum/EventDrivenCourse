@@ -1,52 +1,26 @@
-version: "3"
+version: "3.8"
 services:
-  rabbitmq:
-    image: "rabbitmq"
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
     environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: password
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - rabbitmq_network
+      ZOOKEEPER_CLIENT_PORT: 2181
 
-  producer:
-    image: cart_service:latest
-    build:
-      context: ./producer
-    container_name: producer
-    ports:
-      - "5000:5000"
-    environment:
-      RABBIT_HOST: rabbitmq
-      HOST: 0.0.0.0
-    networks:
-      - rabbitmq_network
+  kafka:
+    image: confluentinc/cp-kafka:latest
     depends_on:
-      - rabbitmq
-
-  consumer:
-    image: order_service:latest
-    build:
-      context: ./consumer
-    container_name: consumer
+      - zookeeper
     ports:
-      - "5001:5001"
+      - "9092:9092"
     environment:
-      RABBIT_HOST: rabbitmq
-      HOST: 0.0.0.0
-    networks:
-      - rabbitmq_network
-    depends_on:
-      - rabbitmq
-      - producer
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://:9092
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
 
-networks:
-  rabbitmq_network:
-    driver: bridge
-
-volumes:
-  rabbitmq_data:
+  # schema-registry:
+  #   image: confluentinc/cp-schema-registry:latest
+  #   depends_on:
+  #     - kafka
+  #   environment:
+  #     SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
+  #     SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081

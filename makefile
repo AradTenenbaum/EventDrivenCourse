@@ -25,3 +25,12 @@ logs:
 
 remove-none-images:
 	docker images --filter "dangling=true" -q | ForEach-Object { docker rmi $_ }
+
+
+publish:
+	@echo Tag images
+	docker tag order_service 19871654/order_service_consumer:latest
+	docker tag cart_service 19871654/cart_service_producer:latest
+	@echo Push to docker hub
+	docker push 19871654/order_service_consumer:latest
+	docker push 19871654/cart_service_producer:latest

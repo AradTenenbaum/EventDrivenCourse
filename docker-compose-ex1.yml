@@ -1,0 +1,52 @@
+version: "3"
+services:
+  rabbitmq:
+    image: "rabbitmq"
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - rabbitmq_network
+
+  producer:
+    image: 19871654/cart_service_producer:latest
+    build:
+      context: ./producer
+    container_name: producer
+    ports:
+      - "5000:5000"
+    environment:
+      RABBIT_HOST: rabbitmq
+      HOST: 0.0.0.0
+    networks:
+      - rabbitmq_network
+    depends_on:
+      - rabbitmq
+
+  consumer:
+    image: 19871654/order_service_consumer:latest
+    build:
+      context: ./consumer
+    container_name: consumer
+    ports:
+      - "5001:5001"
+    environment:
+      RABBIT_HOST: rabbitmq
+      HOST: 0.0.0.0
+    networks:
+      - rabbitmq_network
+    depends_on:
+      - rabbitmq
+      - producer
+
+networks:
+  rabbitmq_network:
+    driver: bridge
+
+volumes:
+  rabbitmq_data:

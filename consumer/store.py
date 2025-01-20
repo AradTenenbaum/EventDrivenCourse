@@ -21,6 +21,17 @@ def add_order(order):
     update_store(Orders)
 
 
+def update_order_status(order_id, order_status):
+    Orders = get_store()
+    Orders[order_id]['status'] = order_status
+    update_store(Orders)
+
+
 def get_order(orderId):
     Orders = get_store()
     return Orders[orderId]
+
+
+def get_all_order_ids(topic):
+    Orders = get_store()
+    return [order_id for order_id in Orders.keys()]

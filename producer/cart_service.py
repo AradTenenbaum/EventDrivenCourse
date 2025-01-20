@@ -12,6 +12,9 @@ app = Flask(__name__)
 from confluent_kafka import Producer
 import json
 
+CREATE = "CREATE"
+UPDATE = "UPDATE"
+
 @app.route('/create-order', methods=['POST'])
 def create_order():
     data = request.json
@@ -26,7 +29,7 @@ def create_order():
     order = create_random_order(data['orderId'], data['itemsNum'])
 
     try:
-        send_order(order)
+        send_order(order, CREATE)
     
         response = {
             "order": order
@@ -49,12 +52,14 @@ def update_order():
     if not 'status' in data:
         return jsonify({"error": "Status is not provided"}), 400
     
-    # send_order(order)
+    send_order(data, UPDATE)
+
+    data.pop('mode')
     
-    # response = {
-    #     "order": order
-    # }
-    return jsonify(data), 200
+    response = {
+        "order": data
+    }
+    return jsonify(response), 200
 
 if __name__ == '__main__':
     # init_rabbit()

@@ -15,7 +15,8 @@ def delivery_report(err, msg):
     else:
         print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
 
-def send_order(order):
+def send_order(order, mode):
+    order["mode"] = mode
     producer.produce(
         'order_events',
         key=order['orderId'],

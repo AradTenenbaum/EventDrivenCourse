@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 import threading
-from store import get_order
+from store import get_order, get_all_order_ids
 from rabbitmq_connect import consume_messages
 from kafka_connect import consume_orders
 from store import init_store
@@ -10,13 +10,13 @@ import os
 load_dotenv()
 app = Flask(__name__)
 
-@app.route('/order-details', methods=['POST'])
+@app.route('/order-details', methods=['GET'])
 def order_details():
-    data = request.json
-    if not data:
+    orderId = request.args.get('orderId', default=None)
+    if orderId == None:
         return jsonify({"error": "No order id provided"}), 400
     
-    order = get_order(data['orderId'])
+    order = get_order(orderId)
 
     if order is None:
         return jsonify({"error": "Order not found"}), 404
@@ -25,6 +25,21 @@ def order_details():
         "order": order
     }
     return jsonify(response), 200
+
+
+@app.route('/getAllOrderIdsFromTopic', methods=['GET'])
+def get_all_order_ids_from_topic():
+    topic = request.args.get('topic', default=None)
+
+    if topic == None:
+        return jsonify({"error": "No topic provided"}), 400
+    if topic not in ['order_events']:
+        return jsonify({"error": "No such topic"}), 404
+    
+    all_order_ids = get_all_order_ids(topic)
+
+    return jsonify(all_order_ids), 200
+
 
 if __name__ == "__main__":
     init_store()

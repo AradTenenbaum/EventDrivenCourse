@@ -1,5 +1,6 @@
 import os
 import json
+import logging
 
 
 def init_store(filename = 'data.json'):
@@ -17,12 +18,18 @@ def update_store(data, filename = 'data.json'):
 
 def add_order(order):
     Orders = get_store()
+    if order['orderId'] in Orders:
+        logging.info(f"Order {order['orderId']} already exists. Cannot create.")
+        return
     Orders[order['orderId']] = order
     update_store(Orders)
 
 
 def update_order_status(order_id, order_status):
     Orders = get_store()
+    if not order_id in Orders:
+        logging.info(f"Order {order_id} does not exists. Cannot update.")
+        return
     Orders[order_id]['status'] = order_status
     update_store(Orders)
 

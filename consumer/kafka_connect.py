@@ -38,12 +38,12 @@ def consume_orders():
 
             if mode == CREATE:
                 order['shippingCost'] = order['totalAmount'] * 0.02
+                logging.info(f"Received order creation message: {order}")
                 add_order(order)
-                logging.info(f"Received order: {order}")
             elif mode == UPDATE:
+                logging.info(f"Received order update message: {order}")
                 update_order_status(order['orderId'], order['status'])
                 order = {key: item for key, item in order.items() if key in ['orderId', 'status', 'mode']}
-                logging.info(f"Order update: {order}")
             else:
                 print(f"Consumer error: mode it not valid")
 

@@ -3,6 +3,11 @@ import string
 import datetime
 from decimal import Decimal
 
+STATUSES = ['confirmed', 'pending', 'shipped', 'delivered', 'cancelled', 'new']
+
+def is_valid_status(status):
+    return status in STATUSES
+
 def generate_random_string(length=8):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
@@ -11,7 +16,6 @@ def generate_random_decimal(min_value=1.00, max_value=100.00):
 
 def create_random_order(order_id, num_items):
     currencies = ['USD', 'EUR', 'GBP', 'AUD', 'CAD', 'ILS']
-    statuses = ['confirmed', 'pending', 'shipped', 'delivered', 'cancelled', 'new']
 
     items = []
     total_amount = Decimal(0)
@@ -33,7 +37,7 @@ def create_random_order(order_id, num_items):
         'items': items,
         'totalAmount': float(total_amount),
         'currency': random.choice(currencies),
-        'status': random.choice(statuses),
+        'status': random.choice(STATUSES),
     }
 
     return order

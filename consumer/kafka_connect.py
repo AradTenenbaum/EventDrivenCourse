@@ -3,12 +3,21 @@ from confluent_kafka.avro.serializer import SerializerError
 import json
 from store import add_order, update_order_status
 import logging
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+KAFKA_HOST = os.getenv("KAFKA_HOST")
+KAFKA_PORT = os.getenv("KAFKA_PORT")
+SCHEMA_REGISTRY_HOST = os.getenv("SCHEMA_REGISTRY_HOST")
+SCHEMA_REGISTRY_PORT = os.getenv("SCHEMA_REGISTRY_PORT")
 
 consumer = AvroConsumer({
-    'bootstrap.servers': 'localhost:29092',
+    'bootstrap.servers': f'{KAFKA_HOST}:{KAFKA_PORT}',
     'group.id': 'order_service_group',
     'auto.offset.reset': 'earliest',
-    'schema.registry.url': 'http://localhost:8081'
+    'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}'
 })
 consumer.subscribe(['order_events'])
 

@@ -29,3 +29,38 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9092
       SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
+
+  producer:
+    image: kafka_cart_service:latest
+    build:
+      context: ./producer
+    container_name: producer
+    ports:
+      - "5000:5000"
+    environment:
+      HOST: 0.0.0.0
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+      SCHEMA_REGISTRY_HOST: schema-registry
+      SCHEMA_REGISTRY_PORT: 8081
+    depends_on:
+      - kafka
+      - schema-registry
+
+  consumer:
+    image: kafka_order_service:latest
+    build:
+      context: ./consumer
+    container_name: consumer
+    ports:
+      - "5001:5001"
+    environment:
+      HOST: 0.0.0.0
+      KAFKA_HOST: kafka
+      KAFKA_PORT: 9092
+      SCHEMA_REGISTRY_HOST: schema-registry
+      SCHEMA_REGISTRY_PORT: 8081
+    depends_on:
+      - kafka
+      - schema-registry
+      - producer

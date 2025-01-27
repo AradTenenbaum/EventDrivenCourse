@@ -1,11 +1,11 @@
 
 build-producer:
-	@echo "Building Docker image: cart_service:latest"
-	docker build -t cart_service:latest -f ./producer/Dockerfile ./producer
+	@echo "Building Docker image: kafka_cart_service:latest"
+	docker build -t kafka_cart_service:latest -f ./producer/Dockerfile ./producer
 
 build-consumer:
-	@echo "Building Docker image: order_service:latest"
-	docker build -t order_service:latest -f ./consumer/Dockerfile ./consumer
+	@echo "Building Docker image: kafka_order_service:latest"
+	docker build -t kafka_order_service:latest -f ./consumer/Dockerfile ./consumer
 
 run-build-app:
 	@echo Running Application

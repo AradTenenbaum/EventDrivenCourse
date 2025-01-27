@@ -3,6 +3,10 @@ import json
 import time
 from confluent_kafka.avro import AvroProducer
 from confluent_kafka.avro import CachedSchemaRegistryClient
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
 
 order_schema = '''
 {
@@ -47,10 +51,15 @@ key_schema = '''
 }
 '''
 
+KAFKA_HOST = os.getenv("KAFKA_HOST")
+KAFKA_PORT = os.getenv("KAFKA_PORT")
+SCHEMA_REGISTRY_HOST = os.getenv("SCHEMA_REGISTRY_HOST")
+SCHEMA_REGISTRY_PORT = os.getenv("SCHEMA_REGISTRY_PORT")
+
 avro_producer = AvroProducer(
     {
-        'bootstrap.servers': 'localhost:29092',
-        'schema.registry.url': 'http://localhost:8081'
+        'bootstrap.servers': f'{KAFKA_HOST}:{KAFKA_PORT}',
+        'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}'
     },
     default_key_schema=key_schema,
     default_value_schema=order_schema

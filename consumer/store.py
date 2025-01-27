@@ -29,6 +29,8 @@ def update_order_status(order_id, order_status):
 
 def get_order(orderId):
     Orders = get_store()
+    if orderId not in Orders:
+        return None
     return Orders[orderId]
 
 

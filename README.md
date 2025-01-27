@@ -1,4 +1,4 @@
-# README - Event-Driven Producer-Consumer Application Using Kafka
+# Event-Driven Producer-Consumer Application Using Kafka
 
 ## Full Name and ID Number
 

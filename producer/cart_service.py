@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from generate_order import create_random_order
 # from rabbitmq_client import send_order, init_rabbit
-from kafka_client import send_order, wait_for_connection
+from kafka_client import send_order
 from dotenv import load_dotenv
 import os
 import threading
@@ -52,7 +52,13 @@ def update_order():
     if not 'status' in data:
         return jsonify({"error": "Status is not provided"}), 400
     
-    send_order(data, UPDATE)
+    try:
+        send_order(data, UPDATE)
+    except Exception as e:
+        print("Error: ", str(e))
+        return jsonify({
+            "message": "Server Error"
+        }), 500
 
     data.pop('mode')
     
@@ -63,6 +69,4 @@ def update_order():
 
 if __name__ == '__main__':
     # init_rabbit()
-    kafka_connection_check_thread = threading.Thread(target=wait_for_connection, daemon=True)
-    kafka_connection_check_thread.start()
     app.run(debug=True, host=os.getenv('HOST'))

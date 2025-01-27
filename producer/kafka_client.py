@@ -1,13 +1,60 @@
 from confluent_kafka import Producer
 import json
 import time
+from confluent_kafka.avro import AvroProducer
+from confluent_kafka.avro import CachedSchemaRegistryClient
 
-producer = Producer({
-    'bootstrap.servers': 'localhost:9092',
-    'retries': 10,
-    'retry.backoff.ms': 500,
-    'log_level': 2
-})
+order_schema = '''
+{
+  "type": "record",
+  "name": "Order",
+  "fields": [
+    {"name": "orderId", "type": "string"},
+    {"name": "currency", "type": "string", "default": ""},
+    {"name": "customerId", "type": "string", "default": ""},
+    {"name": "items", "type": {"type": "array", "items": {
+      "type": "record",
+      "name": "Item",
+      "fields": [
+        {"name": "itemId", "type": "string"},
+        {"name": "price", "type": "float"},
+        {"name": "quantity", "type": "int"}
+      ]
+    }}, "default": []},
+    {"name": "mode", "type": "string", "default": ""},
+    {"name": "orderDate", "type": "string", "default": ""},
+    {"name": "status", "type": "string", "default": ""},
+    {"name": "totalAmount", "type": "float", "default": 0}
+  ]
+}
+'''
+
+update_order_schema = '''
+{
+  "type": "record",
+  "name": "OrderUpdate",
+  "fields": [
+    {"name": "orderId", "type": "string"},
+    {"name": "mode", "type": "string"},
+    {"name": "status", "type": "string"}
+  ]
+}
+'''
+
+key_schema = '''
+{
+    "type": "string"
+}
+'''
+
+avro_producer = AvroProducer(
+    {
+        'bootstrap.servers': 'localhost:29092',
+        'schema.registry.url': 'http://localhost:8081'
+    },
+    default_key_schema=key_schema,
+    default_value_schema=order_schema
+)
 
 def delivery_report(err, msg):
     if err is not None:
@@ -17,13 +64,21 @@ def delivery_report(err, msg):
 
 def send_order(order, mode):
     order["mode"] = mode
-    producer.produce(
-        'order_events',
-        key=order['orderId'],
-        value=json.dumps(order),
-        callback=delivery_report
-    )
-    producer.flush()
+    if mode == "UPDATE":
+        avro_producer.produce(
+            topic='order_events',
+            key=order['orderId'],
+            value=order,
+            callback=delivery_report,
+        )
+    else:
+        avro_producer.produce(
+            topic='order_events',
+            key=order['orderId'],
+            value=order,
+            callback=delivery_report,
+        )
+    avro_producer.flush()
 
 
 def wait_for_connection():
@@ -32,7 +87,7 @@ def wait_for_connection():
 
     for i in range(max_retries):
         try:
-            producer.list_topics(timeout=5)
+            avro_producer.produce(topic='order_events', value={"test": "test"}, key="test")
             print("Connected to Kafka broker.")
             return True
         except Exception as e:

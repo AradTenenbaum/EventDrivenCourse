@@ -1,12 +1,14 @@
-from confluent_kafka import Consumer
+from confluent_kafka.avro import AvroConsumer
+from confluent_kafka.avro.serializer import SerializerError
 import json
 from store import add_order, update_order_status
 import logging
 
-consumer = Consumer({
-    'bootstrap.servers': 'localhost:9092',
+consumer = AvroConsumer({
+    'bootstrap.servers': 'localhost:29092',
     'group.id': 'order_service_group',
-    'auto.offset.reset': 'earliest'
+    'auto.offset.reset': 'earliest',
+    'schema.registry.url': 'http://localhost:8081'
 })
 consumer.subscribe(['order_events'])
 
@@ -22,8 +24,7 @@ def consume_orders():
             if msg.error():
                 print(f"Consumer error: {msg.error()}")
                 continue
-
-            order = json.loads(msg.value().decode('utf-8'))
+            order = msg.value()
             mode = order.pop('mode')
 
             if mode == CREATE:
@@ -32,6 +33,7 @@ def consume_orders():
                 logging.info(f"Received order: {order}")
             elif mode == UPDATE:
                 update_order_status(order['orderId'], order['status'])
+                order = {key: item for key, item in order.items() if key in ['orderId', 'status', 'mode']}
                 logging.info(f"Order update: {order}")
             else:
                 print(f"Consumer error: mode it not valid")

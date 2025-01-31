@@ -80,19 +80,26 @@
 
 ---
 
-## Error Handling
+## Kafka Error Handling and Reliability Improvements
 
-1. **Producer-Side Errors (Cart Service):**
+### 1. **Producer Error Handling**
 
-   - **Handling Kafka Connection Errors:**
-     - If Kafka is unreachable, the producer retries sending the message with exponential backoff to avoid overwhelming the system.
-     - After a maximum retry count, the error is logged, and an alert is raised for manual intervention.
-   - **Invalid Message Format:**
-     - Before sending, all messages are validated to ensure required fields (e.g., `order_id`, `type`) are present. Invalid messages are rejected with an appropriate HTTP response (400 Bad Request).
+- **Retry & Backoff**: Configured `retries=100_000_000` for retry sending a message if it fails, `retry.backoff.ms=500` for the time interval between retries, `retry.backoff.max.ms=5000` and `message.timeout.ms=30000` to prevent infinite retry loops.
+- **Serialization/Deserialization Errors**: I use schema registry to manage the schema of the order.
+- **Idempotence**: Enabled `enable.idempotence=True` to avoid duplicate messages.
+- **Timeout Handling**: Configured `request.timeout.ms=30000` and `delivery.timeout.ms=60000` for longer wait periods if network latency is expected.​
+- **Topic Handling**: Auto topic creation is enabled. It is less recommended but I only have one topic.
+- **Logic Catching Errors**: Catching KafkaException and logging the error
 
-2. **Consumer-Side Errors (Order Service):**
+### 2. **Consumer Error Handling**
 
-   - **Deserialization Errors:**
-     - If a message cannot be deserialized (e.g., malformed JSON), the consumer logs the error and skips the message to avoid disrupting the entire processing stream.
-   - **Business Logic Errors:**
-     - For example, if an update message is received for a non-existent `order_id`, the consumer logs the error.
+- **Reconnect & Timeout Settings**
+
+  - **`reconnect.backoff.ms=1000`** – Initial delay before reconnecting to a broker.
+  - **`reconnect.backoff.max.ms=16000`** – Maximum backoff time between reconnection attempts.
+  - **`session.timeout.ms=45000`** – Time before the broker considers a consumer dead if no heartbeat is received.
+  - **`fetch.wait.max.ms=500`** – Max wait time before the broker returns data to the consumer.
+  - **`max.poll.interval.ms=300000`** – Max time between polls before the consumer is removed from the group.
+
+- **Deserialization Errors**: Using confluent schema registry and logging all exceptions.
+- **Message order**: I used the order id as key both for the update and the create order so every message with the same order id should be received in the same partition avoiding an update to be received before a create.

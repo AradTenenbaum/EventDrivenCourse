@@ -2,7 +2,7 @@ from confluent_kafka import Producer
 import json
 import time
 from confluent_kafka.avro import AvroProducer
-from confluent_kafka.avro import CachedSchemaRegistryClient
+from confluent_kafka import KafkaException
 import os
 from dotenv import load_dotenv
 
@@ -56,52 +56,55 @@ KAFKA_PORT = os.getenv("KAFKA_PORT")
 SCHEMA_REGISTRY_HOST = os.getenv("SCHEMA_REGISTRY_HOST")
 SCHEMA_REGISTRY_PORT = os.getenv("SCHEMA_REGISTRY_PORT")
 
+def error_callback(err):
+    print(f"Kafka error callback: {err}")
+
 avro_producer = AvroProducer(
     {
+        # Connections
         'bootstrap.servers': f'{KAFKA_HOST}:{KAFKA_PORT}',
-        'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}'
+        'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}',
+        # Failure handling
+        'retries': 100_000_000,
+        'message.send.max.retries': 5,
+        'retry.backoff.ms': 500,         # Start with 0.5s backoff
+        'retry.backoff.max.ms': 5000,    # Maximum backoff of 5s
+        'message.timeout.ms': 30000,     # Stop retrying after 30s
+        'enable.idempotence': True,      # Ensures exactly-once delivery, avoiding duplicate messages
+        'request.timeout.ms': 30000,
+        'delivery.timeout.ms': 60000,
+        # 'socket.timeout.ms': 10000,
+        # Callbacks 
+        "error_cb": error_callback
     },
     default_key_schema=key_schema,
-    default_value_schema=order_schema
+    default_value_schema=order_schema,
 )
+
 
 def delivery_report(err, msg):
     if err is not None:
-        print(f"Message delivery failed: {err}")
+        print(f"Kafka log callback: Message delivery failed: {err}")
     else:
-        print(f"Message delivered to {msg.topic()} [{msg.partition()}]")
+        print(f"Kafka log callback: Message delivered to topic {msg.topic()}, partition [{msg.partition()}]")
 
 def send_order(order, mode):
-    order["mode"] = mode
-    if mode == "UPDATE":
-        avro_producer.produce(
-            topic='order_events',
-            key=order['orderId'],
-            value=order,
-            callback=delivery_report,
-        )
-    else:
-        avro_producer.produce(
-            topic='order_events',
-            key=order['orderId'],
-            value=order,
-            callback=delivery_report,
-        )
-    avro_producer.flush()
-
-
-def wait_for_connection():
-    max_retries = 5
-    retry_interval = 2
-
-    for i in range(max_retries):
-        try:
-            avro_producer.produce(topic='order_events', value={"test": "test"}, key="test")
-            print("Connected to Kafka broker.")
-            return True
-        except Exception as e:
-            print(f"Kafka connection attempt {i + 1} failed: {e}. Retrying in {retry_interval}s...")
-            time.sleep(retry_interval)
-
-    print("Failed to connect to Kafka after multiple attempts.")
-    return False
+    try:
+        order["mode"] = mode
+        if mode == "UPDATE":
+            avro_producer.produce(
+                topic='order_events',
+                key=order['orderId'],
+                value=order,
+                callback=delivery_report,
+            )
+        else:
+            avro_producer.produce(
+                topic='order_events',
+                key=order['orderId'],
+                value=order,
+                callback=delivery_report,
+            )
+        avro_producer.flush()
+    except KafkaException as e:
+        print(f"KafkaException: {str(e)}")

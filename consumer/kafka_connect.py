@@ -17,7 +17,13 @@ consumer = AvroConsumer({
     'bootstrap.servers': f'{KAFKA_HOST}:{KAFKA_PORT}',
     'group.id': 'order_service_group',
     'auto.offset.reset': 'earliest',
-    'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}'
+    'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}',
+    # 'socket.timeout.ms': 10000,
+    'reconnect.backoff.ms': 1000,       # Start with 1s
+    'reconnect.backoff.max.ms': 16000,  # Maximum backoff of 16s
+    'session.timeout.ms': 45000,        # Time before consumer is considered dead
+    'max.poll.interval.ms': 300000,     # Max processing time before rebalancing
+    'fetch.wait.max.ms': 500
 })
 consumer.subscribe(['order_events'])
 
@@ -41,9 +47,9 @@ def consume_orders():
                 logging.info(f"Received order creation message: {order}")
                 add_order(order)
             elif mode == UPDATE:
+                order = {key: item for key, item in order.items() if key in ['orderId', 'status']}
                 logging.info(f"Received order update message: {order}")
                 update_order_status(order['orderId'], order['status'])
-                order = {key: item for key, item in order.items() if key in ['orderId', 'status', 'mode']}
             else:
                 print(f"Consumer error: mode it not valid")
 

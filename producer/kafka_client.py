@@ -5,6 +5,7 @@ from confluent_kafka.avro import AvroProducer
 from confluent_kafka import KafkaException
 import os
 from dotenv import load_dotenv
+import random
 
 load_dotenv()
 
@@ -51,6 +52,11 @@ key_schema = '''
 }
 '''
 
+# Connection fail - exponent backoff parameters
+MAX_RETRIES = 5
+BASE_DELAY = 1 
+MAX_DELAY = 20
+
 KAFKA_HOST = os.getenv("KAFKA_HOST")
 KAFKA_PORT = os.getenv("KAFKA_PORT")
 SCHEMA_REGISTRY_HOST = os.getenv("SCHEMA_REGISTRY_HOST")
@@ -59,27 +65,48 @@ SCHEMA_REGISTRY_PORT = os.getenv("SCHEMA_REGISTRY_PORT")
 def error_callback(err):
     print(f"Kafka error callback: {err}")
 
-avro_producer = AvroProducer(
-    {
-        # Connections
-        'bootstrap.servers': f'{KAFKA_HOST}:{KAFKA_PORT}',
-        'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}',
-        # Failure handling
-        'retries': 100_000_000,
-        'message.send.max.retries': 5,
-        'retry.backoff.ms': 500,         # Start with 0.5s backoff
-        'retry.backoff.max.ms': 5000,    # Maximum backoff of 5s
-        'message.timeout.ms': 30000,     # Stop retrying after 30s
-        'enable.idempotence': True,      # Ensures exactly-once delivery, avoiding duplicate messages
-        'request.timeout.ms': 30000,
-        'delivery.timeout.ms': 60000,
-        # 'socket.timeout.ms': 10000,
-        # Callbacks 
-        "error_cb": error_callback
-    },
-    default_key_schema=key_schema,
-    default_value_schema=order_schema,
-)
+def create_producer():
+    """Create a Kafka producer with exponential backoff on connection failure."""
+    retries = 0
+    while retries < MAX_RETRIES:
+        try:
+            producer = AvroProducer(
+                {
+                    # Connections
+                    'bootstrap.servers': f'{KAFKA_HOST}:{KAFKA_PORT}',
+                    'schema.registry.url': f'http://{SCHEMA_REGISTRY_HOST}:{SCHEMA_REGISTRY_PORT}',
+                    # Failure handling
+                    'retries': 100_000_000,
+                    'message.send.max.retries': 5,
+                    'retry.backoff.ms': 500,         # Start with 0.5s backoff
+                    'retry.backoff.max.ms': 5000,    # Maximum backoff of 5s
+                    'message.timeout.ms': 30000,     # Stop retrying after 30s
+                    'enable.idempotence': True,      # Ensures exactly-once delivery, avoiding duplicate messages
+                    'request.timeout.ms': 30000,
+                    'delivery.timeout.ms': 60000,
+                    # 'socket.timeout.ms': 10000,
+                    # Callbacks 
+                    "error_cb": error_callback
+                },
+                default_key_schema=key_schema,
+                default_value_schema=order_schema,
+            )
+            # Check if Kafka is reachable by querying metadata
+            producer.list_topics(timeout=5)  
+            print("Connected to Kafka successfully!")
+            return producer  # Successfully created producer
+        except KafkaException as e:
+            wait_time = min(BASE_DELAY * (2 ** retries) + random.uniform(0, 0.1), MAX_DELAY)
+            print(f"KafkaException: {str(e)}. Retrying in {wait_time:.2f}s...")
+            time.sleep(wait_time)
+            retries += 1
+    raise RuntimeError("Failed to connect to Kafka after multiple retries.")
+
+try:
+    avro_producer = create_producer()
+except RuntimeError as e:
+    print(f"Critical Error: {e}")
+    exit(1)
 
 
 def delivery_report(err, msg):

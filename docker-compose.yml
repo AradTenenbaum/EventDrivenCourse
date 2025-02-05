@@ -31,7 +31,7 @@ services:
       SCHEMA_REGISTRY_HOST_NAME: schema-registry
 
   producer:
-    image: kafka_cart_service:latest
+    image: 19871654/kafka_cart_service:latest
     build:
       context: ./producer
     container_name: producer
@@ -48,7 +48,7 @@ services:
       - schema-registry
 
   consumer:
-    image: kafka_order_service:latest
+    image: 19871654/kafka_order_service:latest
     build:
       context: ./consumer
     container_name: consumer

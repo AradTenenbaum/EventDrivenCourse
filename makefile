@@ -29,8 +29,8 @@ remove-none-images:
 
 publish:
 	@echo Tag images
-	docker tag order_service 19871654/order_service_consumer:latest
-	docker tag cart_service 19871654/cart_service_producer:latest
+	docker tag kafka_order_service 19871654/kafka_order_service:latest
+	docker tag kafka_cart_service 19871654/kafka_cart_service:latest
 	@echo Push to docker hub
-	docker push 19871654/order_service_consumer:latest
-	docker push 19871654/cart_service_producer:latest
+	docker push 19871654/kafka_order_service:latest
+	docker push 19871654/kafka_cart_service:latest

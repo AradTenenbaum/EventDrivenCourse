@@ -6,6 +6,12 @@
 
 ---
 
+### Bonus implementation
+
+I used schema registry with Avro format
+
+---
+
 ## API Endpoints and Requests
 
 ### Producer Application:
@@ -73,8 +79,8 @@
 ## Key Used in the Message and Why
 
 - **Key Used:** `order_id`
-- **Reason:**  
-  The `order_id` is used as the message key to ensure ordering for events related to the same order. By using `order_id` as the key, Kafka ensures that all messages with the same key are sent to the same partition. This guarantees that:
+- **Reason:**
+  The `order_id` is used as the message key to ensure ordering for events related to the same order. Given the fact I used a single topic for both create order and update status, by using `order_id` as the key Kafka ensures that all messages with the same key are sent to the same partition. This guarantees that:
   - A create message for an order will always be processed before an update message for the same `order_id` if it was sent before.
   - The order of events for a given `order_id` is preserved, reducing the risk of state inconsistencies in the `order_service`.
 
@@ -84,12 +90,13 @@
 
 ### 1. **Producer Error Handling**
 
+- **Connection Failure**: Implemented an exponential backoff that retries 5 times to connect with a max delay of 20 seconds
 - **Retry & Backoff**: Configured `retries=100_000_000` for retry sending a message if it fails, `retry.backoff.ms=500` for the time interval between retries, `retry.backoff.max.ms=5000` and `message.timeout.ms=30000` to prevent infinite retry loops.
 - **Serialization/Deserialization Errors**: I use schema registry to manage the schema of the order.
 - **Idempotence**: Enabled `enable.idempotence=True` to avoid duplicate messages.
 - **Timeout Handling**: Configured `request.timeout.ms=30000` and `delivery.timeout.ms=60000` for longer wait periods if network latency is expected.​
 - **Topic Handling**: Auto topic creation is enabled. It is less recommended but I only have one topic.
-- **Logic Catching Errors**: Catching KafkaException and logging the error
+- **Logic Catching Errors**: Using onError callback and catching KafkaException. Logging all the error
 
 ### 2. **Consumer Error Handling**
 
